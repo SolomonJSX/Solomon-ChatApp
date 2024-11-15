@@ -6,7 +6,7 @@ namespace server_chat_app.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(AuthRepository authRepository) : ControllerBase
+public class AuthController(AuthRepository authRepository, ChatAppDbContext dbContext) : ControllerBase
 {
     [HttpPost("signup")]
     public async Task<ActionResult<User>> SignUp(SignUpDto model)
@@ -33,4 +33,7 @@ public class AuthController(AuthRepository authRepository) : ControllerBase
 
         return Ok(result.Value);
     }
+
+    [HttpGet("user-info")]
+    public async Task<ActionResult> Get
 }
