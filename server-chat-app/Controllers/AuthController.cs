@@ -1,4 +1,7 @@
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using server_chat_app.DTOs;
 using server_chat_app.Models;
 
@@ -35,5 +38,37 @@ public class AuthController(AuthRepository authRepository, ChatAppDbContext dbCo
     }
 
     [HttpGet("user-info")]
-    public async Task<ActionResult> Get
+    public async Task<ActionResult> GetUserInfo()
+    {
+        try
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            var token = HttpContext.Request.Cookies["token"];
+            
+            if (token is null) return Unauthorized("User is not authorized");
+
+            var tokenValidationParameters = new TokenValidationParameters()
+            {
+                ValidIssuer = AuthOptions.ISSUER,
+                ValidAudience = AuthOptions.AUDIENCE,
+                IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
+            };
+            
+            var principal = jwtTokenHandler.ValidateToken(token, tokenValidationParameters, out _);
+            
+            var userId = principal.FindFirst("userId")?.Value;
+            
+            var userData = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString().ToLower() == userId);
+            
+            if (userData is null) return Unauthorized("User is not found");
+
+            return Ok(userData);
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return BadRequest(ex.Message);
+        }
+        
+    }
 }

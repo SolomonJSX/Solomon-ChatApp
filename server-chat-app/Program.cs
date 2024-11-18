@@ -37,8 +37,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
+app.UseCors(builder => builder
+    .WithOrigins("http://localhost:5173")
+    .AllowAnyMethod()
+    .AllowCredentials()
+    .AllowAnyHeader()
+);
+
 app.UseAuthorization();
 app.UseAuthentication();
+
+
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -50,12 +59,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors(builder => builder
-    .WithOrigins("http://localhost:5173")
-    .AllowAnyMethod()
-    .AllowCredentials()
-    .AllowAnyHeader()
-);
+
 
 app.UseHttpsRedirection();
 

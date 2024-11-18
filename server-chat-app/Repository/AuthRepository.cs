@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using CSharpFunctionalExtensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using server_chat_app.DTOs;
@@ -31,12 +32,14 @@ public class AuthRepository(ChatAppDbContext dbContext)
                 ImagePath = imagePath.Result
             };
             
-            string token = CreateToken(user.Email, userId: user.Id);
             
-            AppendToCookies("token", token, httpContext);
             
             var userEntity = dbContext.Add(user);
             await dbContext.SaveChangesAsync();
+            
+            string token = CreateToken(user.Email, userId: userEntity.Entity.Id);
+                        
+            AppendToCookies("token", token, httpContext);
             
             return Result.Success(userEntity.Entity);
         } 
@@ -101,7 +104,7 @@ public class AuthRepository(ChatAppDbContext dbContext)
         return relativePath;
     }
     
-    private string CreateToken(string email, int userId) 
+    private string CreateToken(string email, Guid userId) 
     {
         var claims = new List<Claim>() {
             new Claim(ClaimTypes.Email, email),
@@ -109,9 +112,9 @@ public class AuthRepository(ChatAppDbContext dbContext)
         };
 
         var jwt = new JwtSecurityToken(issuer: AuthOptions.ISSUER, audience: AuthOptions.AUDIENCE, claims: claims,
-            DateTime.Now.AddDays(2),
+            expires: DateTime.Now.AddDays(2),
             signingCredentials: new SigningCredentials(AuthOptions.GetSymmetricSecurityKey(),
-                SecurityAlgorithms.HmacSha256));
+                SecurityAlgorithms.HmacSha256Signature));
         
         return new JwtSecurityTokenHandler().WriteToken(jwt);
     }

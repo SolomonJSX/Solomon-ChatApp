@@ -5,7 +5,7 @@ namespace server_chat_app.Models;
 
 public class User 
 {
-    public int Id { get; set; }
+    public Guid Id { get; set; }
     
     [Required(ErrorMessage = "Email is required")]
     public string Email { get; set; } = null!;
