@@ -7,7 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using server_chat_app.DTOs;
 using server_chat_app.Models;
 
-public class AuthRepository(ChatAppDbContext dbContext)
+public class AuthRepository(ChatAppDbContext dbContext, IWebHostEnvironment environment)
 {
     public async Task<Result<User>> SignUpAsync(SignUpDto model, HttpContext httpContext) 
     {
@@ -19,20 +19,12 @@ public class AuthRepository(ChatAppDbContext dbContext)
             }
             
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
-
-            var imagePath = UpdateFileFromClientAsync(model.File, "profileImages");
             
             var user = new User 
             {
                 Email = model.Email,
-                PasswordHash = passwordHash,
-                Color = model.Color,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                ImagePath = imagePath.Result
+                PasswordHash = passwordHash
             };
-            
-            
             
             var userEntity = dbContext.Add(user);
             await dbContext.SaveChangesAsync();
@@ -48,6 +40,20 @@ public class AuthRepository(ChatAppDbContext dbContext)
             Console.WriteLine(ex.Message);
             return Result.Failure<User>(ex.Message);
         }
+    }
+
+    public async Task<ActionResult<User>> UploadImageAsync(string? userId, IFormFile? uploadedFile) 
+    {
+        var user = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+        if (user is null) return new NotFoundObjectResult("User not found");
+
+        var filePath = await AddImageAsync(uploadedFile, "profiles");
+
+        await dbContext.Users
+            .Where(u => u.Id.ToString() == userId) 
+            .ExecuteUpdateAsync(s => s.SetProperty(u => u.ImagePath, filePath));
+        var updatedUser = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+        return new OkObjectResult(updatedUser);
     }
 
     public async Task<Result<User>> LoginAsync(LoginDTO model, HttpContext httpContext) 
@@ -80,30 +86,50 @@ public class AuthRepository(ChatAppDbContext dbContext)
         }
     }
 
-    private async Task<string?> UpdateFileFromClientAsync(IFormFile? file, string dirName)
+    public async Task<ActionResult<User>> RemoveProfileImage(string? userId) 
     {
-        if (file is null || file.Length == 0) return null;
-        
-        var fileExtension = Path.GetExtension(file.FileName);
-        
-        var filePath = Path.Combine(Directory.GetCurrentDirectory(), $"wwwroot/{dirName}", $"{Guid.NewGuid()}{fileExtension}");
+        if (string.IsNullOrEmpty(userId)) return new NotFoundObjectResult("User ID is not provided.");
 
-        var directoryPath = Path.GetDirectoryName(filePath);
-        
-        if (directoryPath != null && !Directory.Exists(filePath))
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+        if (user is null) return new NotFoundObjectResult("User not found!");
+
+        if (!string.IsNullOrEmpty(user.ImagePath))
         {
-            Directory.CreateDirectory(directoryPath);
+            var deletedFile = RemoveFile(user.ImagePath);
+
+            if (!deletedFile) return new BadRequestObjectResult("Failed to delete old image.");
         }
 
-        using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
-        {
-            await file.CopyToAsync(fileStream);
-        }
-        
-        var relativePath = Path.Combine(dirName, $"{Path.GetFileName(filePath)}");
-        return relativePath;
+        user.ImagePath = null;
+
+        await dbContext.SaveChangesAsync();
+
+        return new OkObjectResult(user);
     }
-    
+
+    private async Task<string?> AddImageAsync(IFormFile? uploadedFile, string dirName) 
+    {
+        if (uploadedFile is null || uploadedFile.Length == 0) return null;
+
+        string basePath = Path.Combine(environment.WebRootPath, dirName);
+
+        if (!Directory.Exists(basePath)) Directory.CreateDirectory(basePath);
+
+        var fileExtension = Path.GetExtension(uploadedFile.FileName);
+
+        var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
+
+        string filePath = Path.Combine(basePath, uniqueFileName);
+
+        await using (var fileStream = new FileStream(filePath, FileMode.Create)) 
+        {
+            await uploadedFile.CopyToAsync(fileStream);
+        }
+
+        return Path.Combine(dirName, uniqueFileName).Replace("\\", "/");
+    }
+
     private string CreateToken(string email, Guid userId) 
     {
         var claims = new List<Claim>() {
@@ -117,6 +143,28 @@ public class AuthRepository(ChatAppDbContext dbContext)
                 SecurityAlgorithms.HmacSha256Signature));
         
         return new JwtSecurityTokenHandler().WriteToken(jwt);
+    }
+
+    private bool RemoveFile(string? filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return false;
+
+        string fullPath = Path.Combine(environment.WebRootPath, filePath);
+
+        if (File.Exists(fullPath))
+        {
+            try
+            {
+                File.Delete(fullPath);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return false;
+            }
+        }
+        return false;
     }
 
     private void AppendToCookies(string key, string value, HttpContext httpContext)

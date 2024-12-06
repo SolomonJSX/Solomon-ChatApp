@@ -38,27 +38,13 @@ public class AuthController(AuthRepository authRepository, ChatAppDbContext dbCo
     }
 
     [HttpGet("user-info")]
-    public async Task<ActionResult> GetUserInfo()
+    [UserIdFilter]
+    public async Task<ActionResult> GetUserInfo(string? userId)
     {
         try
         {
-            var jwtTokenHandler = new JwtSecurityTokenHandler();
-            var token = HttpContext.Request.Cookies["token"];
-            
-            if (token is null) return Unauthorized("User is not authorized");
-
-            var tokenValidationParameters = new TokenValidationParameters()
-            {
-                ValidIssuer = AuthOptions.ISSUER,
-                ValidAudience = AuthOptions.AUDIENCE,
-                IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey()
-            };
-            
-            var principal = jwtTokenHandler.ValidateToken(token, tokenValidationParameters, out _);
-            
-            var userId = principal.FindFirst("userId")?.Value;
-            
-            var userData = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString().ToLower() == userId);
+            if (userId is null) return NotFound("UserId is not found!");
+            var userData = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
             
             if (userData is null) return Unauthorized("User is not found");
 
@@ -70,5 +56,55 @@ public class AuthController(AuthRepository authRepository, ChatAppDbContext dbCo
             return BadRequest(ex.Message);
         }
         
+    }
+
+    [HttpPut("update-user")]
+    [UserIdFilter]
+    public async Task<ActionResult> UpdateUser(string? userId, UpdateUserDTO model)
+    {
+        if (userId is null) return BadRequest("UserId is not found!");
+
+        if (model.FirstName is null || model.LastName is null || model.Color is null)
+            return BadRequest("Firstname lastname and color is not found!");
+
+        await dbContext.Users
+            .Where(u => u.Id.ToString() == userId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(u => u.FirstName, model.FirstName)
+                .SetProperty(u => u.LastName, model.LastName)
+                .SetProperty(u => u.Color, model.Color)
+                .SetProperty(u => u.ProfileSetup, true)
+            );
+        
+        var updatedUser = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+
+        return Ok(updatedUser);
+    }
+
+    [HttpPost("add-profile-image")]
+    [UserIdFilter]
+    public async Task<ActionResult<User>> UploadImage([FromForm] string? userId, IFormFile? uploadedFile)
+    {
+        if (userId is null) return BadRequest("UserId is not found!");
+        return await authRepository.UploadImageAsync(userId, uploadedFile);
+    }
+
+    [HttpDelete("remove-profile-image")]
+    [UserIdFilter]
+    public async Task<ActionResult<User>> UploadImage(string? userId)
+    {
+        return await authRepository.RemoveProfileImage(userId);
+    }
+
+    [HttpPost("logout")]
+    public ActionResult LogOut() {
+        try {
+            HttpContext.Response.Cookies.Delete("token");
+        } catch(Exception ex) 
+        {
+            return BadRequest($"Something went wrong trying delete token. Exception message: ${ex.Message}");
+        }
+        
+        return Ok("Logout successfull!");
     }
 }

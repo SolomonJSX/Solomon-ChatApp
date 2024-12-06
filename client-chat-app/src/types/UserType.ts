@@ -1,19 +1,19 @@
 export interface IUser {
-    id: number
+    id: string
     email: string
     firstName: string | null
     lastName: string | null
     imagePath: string | null
-    color: string | null
+    color: number | null
     profileSetup: boolean
 }
 
 export interface IUserInfo {
-    id: number
+    id: string
     email: string
     firstName: string | null
     lastName: string | null
     imagePath: string | null
-    color: string | null
+    color: number | null
     profileSetup: boolean
 }

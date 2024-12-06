@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <Folder Include="Middlewares\" />
-    <Folder Include="wwwroot\profileImages\" />
+    <Folder Include="wwwroot\" />
   </ItemGroup>
 
 </Project>

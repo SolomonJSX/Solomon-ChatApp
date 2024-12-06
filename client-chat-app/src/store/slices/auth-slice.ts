@@ -1,14 +1,14 @@
 import { StateCreator } from "zustand"
 import { IUserInfo } from "@/types/UserType.ts";
 
-export interface AuthState {
-    userInfo: IUserInfo | undefined
-    setUserInfo: (userInfo: IUserInfo | undefined) => void;
+export interface IAuthState {
+    userInfo: IUserInfo | null
+    setUserInfo: (userInfo: IUserInfo | null) => void;
 }
 
-export const createAuthSlice: StateCreator<AuthState> = (set) => (
+export const createAuthSlice: StateCreator<IAuthState> = (set) => (
     {
-        userInfo: undefined,
-        setUserInfo: (userInfo: IUserInfo | undefined) => set({ userInfo })
+        userInfo: null,
+        setUserInfo: (userInfo: IUserInfo | null) => set({ userInfo })
     }
 )
