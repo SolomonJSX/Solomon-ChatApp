@@ -66,7 +66,7 @@ const Auth = () => {
         if (validateSignup()) {
             const response = await apiClient.post<IUser>(SIGNUP_ROUTE, { email, password }, {withCredentials: true})
 
-            if (response.status === 201) {
+            if (response.status === 200 || response.data) {
                 setUserInfo(response.data)
                 navigate("/profile")
             }

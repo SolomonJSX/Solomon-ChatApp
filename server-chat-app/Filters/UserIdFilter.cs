@@ -25,7 +25,7 @@ class UserIdFilter : Attribute, IAsyncActionFilter
             
             var userId = principal.FindFirst("userId")?.Value;
 
-            context.ActionArguments["userId"] = userId!.ToUpper();
+            context.ActionArguments["userId"] = userId;
             await next();
         }
         catch (Exception ex)

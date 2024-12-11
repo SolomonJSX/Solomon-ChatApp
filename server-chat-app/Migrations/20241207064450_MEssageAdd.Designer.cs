@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,16 +10,19 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace server_chat_app.Migrations
 {
     [DbContext(typeof(ChatAppDbContext))]
-    partial class ChatAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241207064450_MEssageAdd")]
+    partial class MEssageAdd
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.10");
 
             modelBuilder.Entity("server_chat_app.Models.Message", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
@@ -30,12 +34,10 @@ namespace server_chat_app.Migrations
                     b.Property<int>("MessageType")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("RecipientId")
-                        .IsRequired()
+                    b.Property<Guid>("RecipientId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SenderId")
-                        .IsRequired()
+                    b.Property<Guid>("SenderId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("TimeStamp")
@@ -52,7 +54,8 @@ namespace server_chat_app.Migrations
 
             modelBuilder.Entity("server_chat_app.Models.User", b =>
                 {
-                    b.Property<string>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("Color")
@@ -86,27 +89,20 @@ namespace server_chat_app.Migrations
             modelBuilder.Entity("server_chat_app.Models.Message", b =>
                 {
                     b.HasOne("server_chat_app.Models.User", "Recipient")
-                        .WithMany("ReceivedMessages")
+                        .WithMany()
                         .HasForeignKey("RecipientId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("server_chat_app.Models.User", "Sender")
-                        .WithMany("SentMessages")
+                        .WithMany()
                         .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Recipient");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("server_chat_app.Models.User", b =>
-                {
-                    b.Navigation("ReceivedMessages");
-
-                    b.Navigation("SentMessages");
                 });
 #pragma warning restore 612, 618
         }

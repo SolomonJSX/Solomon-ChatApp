@@ -34,7 +34,7 @@ function App() {
         if (response.status === 200 && response.data.id) {
           setUserInfo(response.data);
         } else {
-          setUserInfo(undefined)
+          setUserInfo(null)
         }
       } 
       finally {

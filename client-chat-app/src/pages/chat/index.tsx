@@ -23,7 +23,6 @@ const Chat = () => {
             {
                 selectedChatType === undefined ? <EmptyChatContainer/> : <ChatContainer/>
             }
-            <ChatContainer/>
         </div>
     )
 }

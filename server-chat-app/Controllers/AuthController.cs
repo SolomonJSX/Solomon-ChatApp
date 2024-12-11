@@ -44,7 +44,7 @@ public class AuthController(AuthRepository authRepository, ChatAppDbContext dbCo
         try
         {
             if (userId is null) return NotFound("UserId is not found!");
-            var userData = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            var userData = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
             
             if (userData is null) return Unauthorized("User is not found");
 
@@ -76,7 +76,7 @@ public class AuthController(AuthRepository authRepository, ChatAppDbContext dbCo
                 .SetProperty(u => u.ProfileSetup, true)
             );
         
-        var updatedUser = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+        var updatedUser = await dbContext.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
 
         return Ok(updatedUser);
     }

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using server_chat_app.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,8 @@ builder.Services.AddScoped<AuthRepository>();
 
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 
+builder.Services.AddSignalR();
+
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -30,6 +33,23 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = AuthOptions.AUDIENCE,
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = AuthOptions.GetSymmetricSecurityKey() 
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+ 
+                // если запрос направлен хабу
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chat"))
+                {
+                    // получаем токен из строки запроса
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -47,7 +67,7 @@ app.UseCors(builder => builder
 app.UseAuthorization();
 app.UseAuthentication();
 
-
+app.MapHub<ChatHub>("/chat");
 
 app.UseDefaultFiles();
 app.UseStaticFiles();

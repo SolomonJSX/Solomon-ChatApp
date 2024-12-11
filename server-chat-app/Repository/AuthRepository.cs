@@ -130,11 +130,11 @@ public class AuthRepository(ChatAppDbContext dbContext, IWebHostEnvironment envi
         return Path.Combine(dirName, uniqueFileName).Replace("\\", "/");
     }
 
-    private string CreateToken(string email, Guid userId) 
+    private string CreateToken(string email, string userId) 
     {
         var claims = new List<Claim>() {
             new Claim(ClaimTypes.Email, email),
-            new Claim("userId", userId.ToString())
+            new Claim("userId", userId)
         };
 
         var jwt = new JwtSecurityToken(issuer: AuthOptions.ISSUER, audience: AuthOptions.AUDIENCE, claims: claims,

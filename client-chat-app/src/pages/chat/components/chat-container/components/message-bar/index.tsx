@@ -3,10 +3,14 @@ import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
 import { GrAttachment } from "react-icons/gr"
 import { IoSend } from "react-icons/io5"
 import { RiEmojiStickerLine } from "react-icons/ri"
+import { useAppStore } from "@/store"
+import { useSignalR } from "@/context/SignalRContext"
+import { IMessageDTO, MessageTypeEnum } from "@/types/MessageType"
 
 const MessageBar = () => {
     const emojiRef = useRef<HTMLDivElement>(null)
-
+    const {selectedChatData, selectedChatType, userInfo} = useAppStore()
+    const signalR = useSignalR()
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -31,7 +35,19 @@ const MessageBar = () => {
     }
 
     const handleSendMessage = async () => {
+        //SendMessage(string senderId, string recipientId, string content)
 
+        const messageDTO: IMessageDTO = {
+            senderId: userInfo?.id as string,
+            content: message,
+            recipientId: selectedChatData?.id as string,
+            messageType: MessageTypeEnum.TEXT,
+            fileUrl: undefined
+        }
+
+        if (selectedChatType === "contact") {
+            signalR?.send("SendMessage", messageDTO)
+        }   
     }
 
     return (

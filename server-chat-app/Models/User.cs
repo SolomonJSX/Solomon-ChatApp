@@ -5,7 +5,7 @@ namespace server_chat_app.Models;
 
 public class User 
 {
-    public Guid Id { get; set; }
+    public string Id { get; set; } = Guid.NewGuid().ToString();
     
     [Required(ErrorMessage = "Email is required")]
     public string Email { get; set; } = null!;
@@ -17,5 +17,7 @@ public class User
     public string? ImagePath { get; set; }
     public int? Color { get; set; }
     public bool? ProfileSetup { get; set; } = false;
-
+    
+    public List<Message> SentMessages { get; set; } = new();
+    public List<Message> ReceivedMessages { get; set; } = new();
 }
