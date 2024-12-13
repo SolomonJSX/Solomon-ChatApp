@@ -24,3 +24,7 @@ export interface IMessageDTO {
     senderId: string;
     recipientId: string;
 }
+
+export interface IMessagesResponseDTO {
+    messages: IMessage[];
+}

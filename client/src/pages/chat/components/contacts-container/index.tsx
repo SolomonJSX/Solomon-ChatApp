@@ -53,7 +53,7 @@ const Logo = () => {
                 ></path>
             </svg>
 
-            <span className="text-3xl font-semibold">Syncronus</span>
+            <span className="text-3xl font-semibold">SolomonChat</span>
         </div>
     )
 }

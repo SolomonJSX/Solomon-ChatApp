@@ -10,8 +10,6 @@ public class ChatHub(ChatAppDbContext dbContext) : Hub
 
     public async Task SendMessage(MessageDTO messageDTO)
     {
-        var senderId = userSocketMap[messageDTO.SenderId];
-        var recipientId = userSocketMap[messageDTO.RecipientId];
         var message = new Message()
         {
             SenderId = messageDTO.SenderId,

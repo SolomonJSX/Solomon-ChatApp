@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
@@ -14,7 +15,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+    options.JsonSerializerOptions.MaxDepth = 64;
+    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
 
 builder.Services.AddDbContext<ChatAppDbContext>(options => options.UseSqlite("Data Source=chatapp.db"));
 
@@ -29,7 +35,7 @@ builder.Services.AddSignalR().AddJsonProtocol(options =>
     options.PayloadSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });;
 builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
-builder.Services.AddAuthorization();
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -60,7 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
-
+builder.Services.AddAuthorization();
 
 
 var app = builder.Build();
@@ -72,8 +78,9 @@ app.UseCors(builder => builder
     .AllowAnyHeader()
 );
 
-app.UseAuthorization();
+
 app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHub<ChatHub>("/chat");
 
@@ -86,8 +93,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-
 
 app.UseHttpsRedirection();
 
