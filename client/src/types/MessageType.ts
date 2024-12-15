@@ -28,3 +28,14 @@ export interface IMessageDTO {
 export interface IMessagesResponseDTO {
     messages: IMessage[];
 }
+
+// Определение типа для результата GetContactsForDMList
+export interface IContactForDMList {
+    _Id: string;                 // Идентификатор контакта
+    LastMessageTime: string;     // Время последнего сообщения (ISO-строка или дата)
+    Email: string;               // Email пользователя
+    FirstName: string;           // Имя пользователя
+    LastName: string;            // Фамилия пользователя
+    ImagePath: string;           // Путь к изображению
+    Color: string;               // Цвет пользователя (например, для аватарки)
+}

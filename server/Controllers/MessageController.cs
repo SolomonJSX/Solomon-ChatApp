@@ -9,6 +9,7 @@ namespace server_chat_app.Controllers;
 public class MessageController(ChatAppDbContext dbContext) : ControllerBase
 {
     [HttpPost("get-messages")]
+    [Authorize]
     [UserIdFilter]
     public async Task<ActionResult> GetMessages(string? userId, MessageUserIdDTO messageUserId)
     {
@@ -29,6 +30,7 @@ public class MessageController(ChatAppDbContext dbContext) : ControllerBase
                             (m.SenderId == user2 && m.RecipientId == user1))
                 .OrderBy(m => m.TimeStamp)
                 .ToListAsync();
+            
             return Ok(new MessagesResponseDTO(messages));
         }
         catch (Exception ex)
