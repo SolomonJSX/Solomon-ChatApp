@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using server_chat_app.Hubs;
@@ -107,8 +108,8 @@ var app = builder.Build();
 app.UseCors(builder => builder
     .WithOrigins("http://localhost:5173")
     .AllowAnyMethod()
-    .AllowCredentials()
     .AllowAnyHeader()
+    .AllowCredentials()
 );
 
 

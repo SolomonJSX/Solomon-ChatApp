@@ -31,11 +31,15 @@ export interface IMessagesResponseDTO {
 
 // Определение типа для результата GetContactsForDMList
 export interface IContactForDMList {
-    _Id: string;                 // Идентификатор контакта
-    LastMessageTime: string;     // Время последнего сообщения (ISO-строка или дата)
-    Email: string;               // Email пользователя
-    FirstName: string;           // Имя пользователя
-    LastName: string;            // Фамилия пользователя
-    ImagePath: string;           // Путь к изображению
-    Color: string;               // Цвет пользователя (например, для аватарки)
+    id: string;                 // Идентификатор контакта
+    lastMessageTime: string;     // Время последнего сообщения (ISO-строка или дата)
+    email: string;               // Email пользователя
+    firstName: string;           // Имя пользователя
+    lastName: string;            // Фамилия пользователя
+    imagePath: string;           // Путь к изображению
+    color: number | null;               // Цвет пользователя (например, для аватарки)
+}
+
+export interface IUploadFileResponse {
+    filePath: string | undefined
 }

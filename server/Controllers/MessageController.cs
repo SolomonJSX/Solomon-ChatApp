@@ -6,7 +6,7 @@ namespace server_chat_app.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MessageController(ChatAppDbContext dbContext) : ControllerBase
+public class MessageController(ChatAppDbContext dbContext, IWebHostEnvironment environment) : ControllerBase
 {
     [HttpPost("get-messages")]
     [Authorize]
@@ -37,6 +37,39 @@ public class MessageController(ChatAppDbContext dbContext) : ControllerBase
         {
             Console.WriteLine(ex.Message);
             return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("upload-file")]
+    [Authorize]
+    public async Task<ActionResult> UploadFile([FromForm] UploadFileDTO model)
+    {
+        try
+        {
+            if (model.File is null || model.File.Length == 0) return BadRequest("File is required.");
+            
+            var date = DateTime.Now;
+            
+            string basePath = Path.Combine(environment.WebRootPath, $"uploads/files/{date:yyyyMMdd}");
+            
+            if (!Directory.Exists(basePath)) Directory.CreateDirectory(basePath);
+            
+            var filePath = Path.Combine(basePath, model.File.FileName);
+
+            await using (FileStream fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await model.File.CopyToAsync(fileStream);
+            }
+
+            return Ok(new
+            {
+                FilePath = Path.Combine($"uploads/files/{date:yyyyMMdd}", model.File.FileName).Replace("\\", "/"),
+            });
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+            return BadRequest(e.Message);
         }
     }
 }

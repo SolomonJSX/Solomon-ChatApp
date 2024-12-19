@@ -39,12 +39,12 @@ const Auth = () => {
         }
         if (!password.length) {
             toast.error("Password is required");
-            false;
+            return false;
         }
 
         if (password !== confirmPassword) {
             toast.error("Password and confirm password should be the same.");
-            false;
+            return false;
         }
 
         return true;

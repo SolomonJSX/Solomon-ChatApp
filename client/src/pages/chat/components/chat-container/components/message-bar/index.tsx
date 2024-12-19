@@ -1,15 +1,18 @@
-import { useEffect, useRef, useState } from "react"
-import EmojiPicker, { EmojiClickData, Theme } from "emoji-picker-react"
-import { GrAttachment } from "react-icons/gr"
-import { IoSend } from "react-icons/io5"
-import { RiEmojiStickerLine } from "react-icons/ri"
-import { useAppStore } from "@/store"
-import { useSignalR } from "@/context/SignalRContext"
-import { IMessageDTO, MessageTypeEnum } from "@/types/MessageType"
+import {ChangeEventHandler, useEffect, useRef, useState} from "react"
+import EmojiPicker, {EmojiClickData, Theme} from "emoji-picker-react"
+import {GrAttachment} from "react-icons/gr"
+import {IoSend} from "react-icons/io5"
+import {RiEmojiStickerLine} from "react-icons/ri"
+import {useAppStore} from "@/store"
+import {useSignalR} from "@/context/SignalRContext"
+import {IMessageDTO, IUploadFileResponse, MessageTypeEnum} from "@/types/MessageType"
+import apiClient from "@/lib/api-client.ts";
+import {UPLOAD_FILE_ROUTE} from "@/utils/constants.ts";
 
 const MessageBar = () => {
+    const fileRef = useRef<HTMLInputElement | null>(null)
     const emojiRef = useRef<HTMLDivElement>(null)
-    const {selectedChatData, selectedChatType, userInfo} = useAppStore()
+    const { selectedChatData, selectedChatType, userInfo, setIsFileUploading,setFileUploadProgress } = useAppStore()
     const signalR = useSignalR()
 
     useEffect(() => {
@@ -18,6 +21,7 @@ const MessageBar = () => {
                 setEmojiPickerOpen(false)
             }
         }
+
         document.addEventListener('mouseup', handleClickOutside);
         document.addEventListener('touchend', handleClickOutside);
 
@@ -47,7 +51,53 @@ const MessageBar = () => {
 
         if (selectedChatType === "contact") {
             signalR?.invoke("SendMessage", messageDTO)
-        }   
+        }
+    }
+
+    const handleAttachmentClick = () => {
+        if (fileRef?.current) {
+            fileRef?.current.click()
+        }
+    }
+
+    const handleAttachmentChange: ChangeEventHandler<HTMLInputElement> = async (ev) => {
+        try {
+            if (ev.target.files && ev.target.files[0]) {
+                const file = ev.target.files[0]
+                const formData: FormData = new FormData()
+                formData.append("file", file)
+
+                setIsFileUploading(true)
+
+                const response = await apiClient.post<IUploadFileResponse>(UPLOAD_FILE_ROUTE,
+                    formData,
+                    {
+                        withCredentials: true,
+                        onUploadProgress: (data) => {
+                            setFileUploadProgress(Math.round(data.loaded * 100) / (data.total as number))
+                        }
+                    },
+                )
+
+                if (response.status === 200 && response.data) {
+                    setIsFileUploading(false)
+                    if (selectedChatType === "contact") {
+                        const messageDTO: IMessageDTO = {
+                            senderId: userInfo?.id as string,
+                            content: undefined,
+                            recipientId: selectedChatData?.id as string,
+                            messageType: MessageTypeEnum.FILE,
+                            fileUrl: response.data.filePath
+                        }
+
+                        signalR?.invoke("SendMessage", messageDTO)
+                    }
+                }
+            }
+        } catch (e) {
+            setIsFileUploading(false)
+            console.log(e)
+        }
     }
 
     return (
@@ -60,30 +110,35 @@ const MessageBar = () => {
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                 />
-                <button className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all">
-                    <GrAttachment className="text-2xl" />
+                <button
+                    className="text-neutral-500 focus:border-none focus:outline-none focus:text-white duration-300 transition-all"
+                    onClick={handleAttachmentClick}
+                >
+                    <GrAttachment className="text-2xl"/>
                 </button>
+                <input type="file" ref={fileRef} onChange={handleAttachmentChange} className="hidden"/>
                 <div className="relative">
-                    <button 
-                    className="focus:text-white duration-300 transition-all"
-                    onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                    <button
+                        className="focus:text-white duration-300 transition-all"
+                        onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
                     >
-                        <RiEmojiStickerLine className="text-2xl" />
+                        <RiEmojiStickerLine className="text-2xl"/>
                     </button>
                     <div className="absolute bottom-16 right-0" ref={emojiRef}>
-                        <EmojiPicker 
-                        theme={Theme.DARK}
-                        autoFocusSearch={false}
-                        open={emojiPickerOpen}
-                        onEmojiClick={handleAddEmoji}
+                        <EmojiPicker
+                            theme={Theme.DARK}
+                            autoFocusSearch={false}
+                            open={emojiPickerOpen}
+                            onEmojiClick={handleAddEmoji}
                         />
                     </div>
                 </div>
             </div>
-            <button className="bg-[#8417ff] rounded-md flex items-center justify-center p-5 text-neutral-500 focus:border-none hover:bg-[#741bda] focus:bg-[#741bda] focus:outline-none focus:text-white duration-300 transition-all"
-            onClick={handleSendMessage}
+            <button
+                className="bg-[#8417ff] rounded-md flex items-center justify-center p-5 text-neutral-500 focus:border-none hover:bg-[#741bda] focus:bg-[#741bda] focus:outline-none focus:text-white duration-300 transition-all"
+                onClick={handleSendMessage}
             >
-                <IoSend className="text-2xl" />
+                <IoSend className="text-2xl"/>
             </button>
         </div>
     )

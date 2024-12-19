@@ -6,9 +6,10 @@ import {IContactForDMList} from "@/types/MessageType.ts";
 import {GET_DM_CONTACTS_ROUTE} from "@/utils/constants.ts";
 import {useAppStore} from "@/store";
 import ContactList from "@/components/ui/contact-list.tsx";
+import {CreateChannel} from "@/pages/chat/components/contacts-container/components/create-channel";
 
 const ContactsContainer = () => {
-    const {directMessagesContact, setDirectMessagesContact} = useAppStore()
+    const {directMessagesContacts, setDirectMessagesContact} = useAppStore()
 
     useEffect(() => {
         const getContacts = async () => {
@@ -34,12 +35,13 @@ const ContactsContainer = () => {
                     <NewDM/>
                 </div>
                 <div className="max-h-[38vh] overflow-y-scroll scrollbar-hidden">
-                    <ContactList contacts={directMessagesContact}/>
+                    <ContactList contacts={directMessagesContacts}/>
                 </div>
             </div>
             <div className="my-5">
                 <div className="flex items-center justify-between pr-10">
                     <Title text="Channels" />
+                    <CreateChannel />
                 </div>
             </div>
             <ProfileInfo/>

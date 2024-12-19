@@ -53,7 +53,7 @@ public class ContactsController(ChatAppDbContext dbContext): ControllerBase
         var userContacts = contacts
             .Join(dbContext.Users, g => g._Id, u => u.Id, (g, u) =>
             new {
-                _Id = g._Id,
+                Id = g._Id,
                 LastMessageTime = g.LastMessageTime,
                 Email = u.Email,
                 FirstName = u.FirstName,
@@ -66,4 +66,34 @@ public class ContactsController(ChatAppDbContext dbContext): ControllerBase
         
         return Ok(userContacts);
     }
+
+    [HttpGet("get-all-contacts")]
+    [UserIdFilter]
+    [Authorize]
+    public async Task<IActionResult> GetAllContacts(string? userId)
+    {
+        if (string.IsNullOrEmpty(userId)) return NotFound("User ID is required.");
+
+        var users = await dbContext.Users.AsNoTracking()
+            .Where(u => u.Id != userId)
+            .Select(u => new
+            {
+                u.FirstName,
+                u.LastName,
+                u.Id,
+                u.Email
+            }).ToListAsync();
+
+        var contacts = users
+            .Select(u => new
+            {
+                Label = !string.IsNullOrEmpty(u.Email) ? u.Email : u.FirstName + " " + u.LastName,
+            }).ToList();
+
+        return Ok(new
+        {
+            Contacts = contacts
+        });
+    }
+    
 }

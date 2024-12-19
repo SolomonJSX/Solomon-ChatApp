@@ -14,7 +14,9 @@ public class ChatHub(ChatAppDbContext dbContext) : Hub
         {
             SenderId = messageDTO.SenderId,
             RecipientId = messageDTO.RecipientId,
-            Content = messageDTO.Content
+            Content = messageDTO.Content,
+            FileUrl = messageDTO.FileUrl,
+            MessageType = messageDTO.MessageType,
         };
 
         var messageEntity = await dbContext.Messages.AddAsync(message);

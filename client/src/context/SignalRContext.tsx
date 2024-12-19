@@ -32,7 +32,7 @@ export const SignalRProvider = ({ children }: PropsWithChildren) => {
 
             const handleReceiveMessage = (messageData: IMessage) => {
                 const {selectedChatData, selectedChatType, addMessage} = useAppStore.getState()
-                console.log(messageData)
+
                 if (selectedChatType !== undefined && (selectedChatData?.id === messageData.sender?.id || selectedChatData?.id === messageData.recipient?.id)) {
                     addMessage(messageData)
                 }

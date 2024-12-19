@@ -15,3 +15,14 @@
   font-weight: 500;
   font-style: normal;
 }
+
+/* Для WebKit (Chrome, Safari, Edge) */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* Для всех элементов */
+.scrollbar-hidden {
+  -ms-overflow-style: none; /* Для IE и Edge */
+  scrollbar-width: none;    /* Для Firefox */
+}
